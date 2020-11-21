@@ -53,7 +53,7 @@ public class AggregatedMetrics implements Serializable {
      * Returns aggregated metric's timestamp
      * @return Aggregated metric's timestamp
      */
-    public Long gettimestamp() {
+    public Long getTimestamp() {
         return timestamp;
     }
 
@@ -61,7 +61,7 @@ public class AggregatedMetrics implements Serializable {
      * Set aggregated metric's timestamp
      * @param timestamp New aggregated metric's timestamp
      */
-    public void settimestamp(Long timestamp) {
+    public void setTimestamp(Long timestamp) {
         this.timestamp = timestamp;
     }
 

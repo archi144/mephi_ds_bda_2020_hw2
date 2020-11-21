@@ -1,0 +1,34 @@
+#example.conf: A single-node Flume configuration
+
+# Name the components on this agent
+ agent.sources = spoolSource
+ agent.sinks = cassandraSink
+ agent.channels = fileChannel
+#
+ # Describe/configure the source
+ agent.sources.spoolSource.type = spoolDir
+ agent.sources.spoolSource.spoolDir = /root/Desktop/homework2/input/
+ agent.sources.spoolSource.spoolDir.pollDelay = 10000    # ms
+ agent.sources.spoolSource.interceptors = i1
+ agent.sources.spoolSource.interceptors.i1.type = regex_extractor
+ agent.sources.spoolSource.interceptors.i1.regex = (\\d+),(\\d+),(\\d+)
+ agent.sources.spoolSource.interceptors.i1.serializers = s1 s2 s3
+ agent.sources.spoolSource.interceptors.i1.serializers.s1.name = id
+ agent.sources.spoolSource.interceptors.i1.serializers.s2.name = timestamp
+ agent.sources.spoolSource.interceptors.i1.serializers.s3.name = value
+#
+ # Describe the sink
+  agent.sinks.cassandraSink.hosts=127.0.0.1:9042
+  agent.sinks.cassandraSink.type=com.stratio.ingestion.sink.cassandra.CassandraSink
+  agent.sinks.cassandraSink.tables=app_metrics.raw_metrics
+  agent.sinks.cassandraSink.cqlFile = conf/init_cassandra.cql
+#
+ # Use a channel which buffers events in memory
+ agent.channels=fileChannel
+ agent.channels.fileChannel.type = file
+ agent.channels.fileChannel.checkpointDir=/home/root/flume/channel/check/
+ agent.channels.fileChannel.dataDirs=/home/root/flume/channel/data/
+ # Bind the source and sink to the channel
+ agent.channels.fileChannel.transactionCapacity=10000
+ agent.sources.spoolSource.channels = fileChannel
+ agent.sinks.cassandraSink.channel = fileChannel

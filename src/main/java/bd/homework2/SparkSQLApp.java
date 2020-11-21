@@ -19,7 +19,7 @@ import org.apache.spark.api.java.function.MapFunction;
 import org.apache.spark.sql.*;
 import sun.util.calendar.BaseCalendar;
 
-import static org.apache.spark.sql.functions.col;
+import static org.apache.spark.sql.functions.*;
 import java.util.Calendar;
 import java.util.Arrays;
 import java.util.Collections;
@@ -32,7 +32,6 @@ public class SparkSQLApp {
 
         SparkConf conf = new SparkConf()
                 .setAppName("SparkSQLApp")
-                .setMaster("local[*]")
                 .set("spark.cassandra.connection.host", "127.0.0.1");
         SparkContext sparkContext = new SparkContext(conf);
         SparkSession sparkSession = new SparkSession(sparkContext)
@@ -46,6 +45,9 @@ public class SparkSQLApp {
                 .select("id", "timestamp", "value");
         Encoder<RawMetrics> rawMetricsEncoder = Encoders.bean(RawMetrics.class);
         Dataset<RawMetrics> rawMetricsDataset = sparkSession.createDataset(javaRDD.rdd(),rawMetricsEncoder);
+        rawMetricsDataset.select("timestamp").show();
+        rawMetricsDataset.printSchema();
+        rawMetricsDataset.show();
         String scale = args[0];
         Encoder<AggregatedMetrics> aggregatedMetricsEncoder = Encoders.bean(AggregatedMetrics.class);
         Dataset<AggregatedMetrics> aggregatedMetricsDataset = rawMetricsDataset
@@ -53,6 +55,8 @@ public class SparkSQLApp {
                             raw_metric.settimestamp(DateUtils.round(raw_metric.gettimestamp(), scale));
                             return new AggregatedMetrics(raw_metric.getId(), raw_metric.gettimestamp().getTime(), scale, raw_metric.getValue());
                         }, aggregatedMetricsEncoder);
+        aggregatedMetricsDataset.groupBy("id","timestamp","scale")
+                .agg(expr("avg(value)").cast("int").as("value")).show();
         aggregatedMetricsDataset.createOrReplaceTempView("table");
         aggregatedMetricsDataset.sqlContext().sql("SELECT id, timestamp, scale, AVG(value) as value FROM table GROUP BY id, timestamp, scale")
                 .write()

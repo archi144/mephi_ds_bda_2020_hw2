@@ -1,0 +1,33 @@
+#example.conf: A single-node Flume configuration
+
+# Name the components on this agent
+ agent.sources = netcatSource
+ agent.sinks = cassandraSink
+ agent.channels = fileChannel
+#
+ # Describe/configure the source
+ agent.sources.netcatSource.type = netcat
+ agent.sources.netcatSource.bind = 0.0.0.0
+ agent.sources.netcatSource.port = 11111
+ agent.sources.netcatSource.interceptors = i1
+ agent.sources.netcatSource.interceptors.i1.type = regex_extractor
+ agent.sources.netcatSource.interceptors.i1.regex = (\\d+),(\\d+),(\\d+)
+ agent.sources.netcatSource.interceptors.i1.serializers = s1 s2 s3
+ agent.sources.netcatSource.interceptors.i1.serializers.s1.name = id
+ agent.sources.netcatSource.interceptors.i1.serializers.s2.name = timestamp
+ agent.sources.netcatSource.interceptors.i1.serializers.s3.name = value
+
+#
+ # Describe the sink
+ agent.sinks.cassandraSink.hosts=127.0.0.1:9042
+ agent.sinks.cassandraSink.type=com.stratio.ingestion.sink.cassandra.CassandraSink
+ agent.sinks.cassandraSink.tables=raw_metrics.raw_metrics
+#
+# # Use a channel which buffers events in memory
+ agent.channels=fileChannel
+ agent.channels.fileChannel.type = memory
+ agent.channels.fileChannel.capacity=10000
+ # Bind the source and sink to the channel
+ agent.channels.fileChannel.transactionCapacity=100
+ agent.sources.netcatSource.channels = fileChannel
+ agent.sinks.cassandraSink.channel = fileChannel
